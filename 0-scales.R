@@ -1,22 +1,84 @@
+# Make summed scales for analysis
+# Don't forget to reverse-score, you chucklehead!
+
 library(readxl)
 library(magrittr)
 library(dplyr)
 library(psych)
-library(BayesFactor)
 library(ggplot2)
 
 dat = read_excel("data_final.xls", 1)
 
 # data cleaning
 # mutate columns to numeric, coercing NAs
-
-# Unfortunately, this doesn't seem to work, which makes me mad
-# dat = dat %>% 
-#   mutate_each(funs(as.numeric), vars = AR_1:AR_8)
-
-# Do it the old way
 dat$AR_2 = as.numeric(dat$AR_2)
 
+# 1st amendment ----
+dat$amend1 = dat %>% 
+  select(speech_protect, game_amend, media_reg, ben_risk, glad_speech) %>% 
+  apply(1, sum)
+
+# 2nd amendment ----
+dat$amend2 = dat %>% 
+  select(gun_protect, gun_amendment, gun_reg, glad_gun) %>% 
+  apply(1, sum)
+
+# AR-15 desire ----
+dat$AR_desire = dat %>% 
+  select(AR_1:AR_5) %>% 
+  apply(1, sum)
+
+# AR-15 buying intention ----
+dat$AR_intent = dat %>% 
+  select(AR_6:AR_8) %>% 
+  apply(1, sum)
+
+# AR-15 price ----
+dat$AR_price = as.numeric(dat$AR_pay)
+dat$AR_price_blank = ifelse(dat$AR_pay == "blank", 1, 0)
+table(dat$AR_price, dat$AR_price_blank, useNA = 'always')
+
+# in-game gun desire ----
+dat$game_gun_desire = dat %>% 
+  select(want:need) %>% 
+  apply(1, sum)
+
+# public policy ----
+dat$policy = dat %>% 
+  select(us_gun_laws:school_staff) %>% 
+  apply(1, sum)
+
+# normative safety ----
+table(dat$per_1); hist(dat$per_1)
+table(dat$per_2); hist(dat$per_2)
+table(dat$per_3); hist(dat$per_3)
+table(dat$per_4); hist(dat$per_4)
+# Looks like an... exponential function? Hazard function, right?
+# Need to think how to aggregate and model these.
+
+
+# magazine size ----
+table(dat$magazine_cap)
+# Adjust for text
+dat$magazine_cap[dat$magazine_cap == "?"] = NA
+infResps = names(table(dat$magazine_cap))[28:33] # text responses are at end
+dat$magazine_cap[dat$magazine_cap %in% infResps] = 400
+dat$magazine_cap = as.numeric(dat$magazine_cap)
+# start binning
+dat$magazine_cap[dat$magazine_cap > 30] = 30
+dat$magazine_cap_bin = ifelse(dat$magazine_cap == 30, "greater", "other")
+
+# Export
+write.table(dat, "processed_data.txt", sep="\t", row.names=F)
+
+# Inspect distributions
+outcomes = c("amend1", "amend2", "AR_desire", "AR_intent", "AR_price", 
+             "game_gun_desire", "policy")
+dat = as.data.frame(dat)
+for (i in outcomes) hist(dat[,i], main = i)
+# AR_intent, AR_price, game_gun_desire all have strong right skew
+
+# Factor structures and alphas ----
 # Look at structure of AR-desire items
 dat %>% 
   select(AR_1:AR_8) %>% 
@@ -82,7 +144,7 @@ dat %>%
 dat$speech_sum = dat %>% 
   select(speech_protect, game_amend, media_reg, ben_risk, glad_speech) %>% 
   apply(1, sum)
-  
+
 dat$gun_sum = dat %>% 
   select(gun_protect, gun_amendment, gun_reg, glad_gun) %>% 
   apply(1, sum)
@@ -99,7 +161,7 @@ dat %>%
   cor(use='pairwise') %>% 
   round(3)
 
-# I wonder what happens if I just blast everything into PCA ----
+# What if all just one PCA? ----
 # You must scale if you're gonna do that! I think.
 # 
 pc = dat %>% 
@@ -119,28 +181,3 @@ plot(pc)
 
 
 loadings(pc)
-
-
-lm(AR_sum1 ~ Gun_type * Power, data = dat) %>% 
-  summary
-dat %>% 
-  group_by(Gun_type, Power) %>% 
-  summarize(AR_mean = mean(AR_sum1, na.rm=T))
-
-# How much cleaning is there to do?
-
-
-# Analysis ----
-dat_bayes = dat %>% 
-  select(Gun_type, Power, AR_sum1) %>% 
-  mutate(Gun_type = as.factor(Gun_type),
-         Power = as.factor(Power),
-         AR_sum1 = as.numeric(AR_sum1)) %>% 
-  filter(complete.cases(.))
-dat_bayes = data.frame(dat_bayes)
-bayes_model = anovaBF(AR_sum1 ~ Gun_type * Power, rscaleFixed = .5, data = dat_bayes)
-summary(bayes_model)
-plot(bayes_model)
-lm(AR_sum1 ~ Gun_type * Power, data = dat_bayes) %>% summary
-
-# Analysis, considering covariates?
