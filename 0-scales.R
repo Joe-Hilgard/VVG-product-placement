@@ -44,15 +44,18 @@ dat$game_gun_desire = dat %>%
   apply(1, sum)
 
 # public policy ----
+dat$policy = dat$us_gun_laws + dat$us_rifle + dat$guns_det + 
+  (7 - dat$gun_carry) + (7 - dat$school_staff)
+
 dat$policy = dat %>% 
   select(us_gun_laws:school_staff) %>% 
   apply(1, sum)
 
 # normative safety ----
-table(dat$per_1); hist(dat$per_1)
-table(dat$per_2); hist(dat$per_2)
-table(dat$per_3); hist(dat$per_3)
-table(dat$per_4); hist(dat$per_4)
+table(dat$per_1); hist(dat$per_1, xlim = c(0, 100))
+table(dat$per_2); hist(dat$per_2, xlim = c(0, 100))
+table(dat$per_3); hist(dat$per_3, xlim = c(0, 100))
+table(dat$per_4); hist(dat$per_4, xlim = c(0, 100))
 # Looks like an... exponential function? Hazard function, right?
 # Need to think how to aggregate and model these.
 
