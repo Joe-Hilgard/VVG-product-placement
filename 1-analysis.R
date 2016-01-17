@@ -1,13 +1,14 @@
 library(readxl)
 library(magrittr)
 library(dplyr)
+library(tidyr)
 library(psych)
 library(BayesFactor)
 library(ggplot2)
 
 dat = read.delim("processed_data.txt", stringsAsFactors = F)
 
-# data cleaning
+# data cleaning ----
 # Mutate factor forms of Gun_type and Power
 dat$Gun_type_f = factor(dat$Gun_type, labels = c("ZQ-5", "AR-15")) %>% 
   C(sum) %>% 
@@ -29,15 +30,9 @@ tapply(dat$p_key_value_2, list(dat$Gun_type_f, dat$Power_f), mean, na.rm = T)
 
 ggplot(dat, aes(x = p_key_value_1, fill = Power_f)) +
   geom_histogram(position = "dodge")
-ggplot(dat, aes(x = interaction(Power_f, Gun_type_f), y = p_key_value_1)) +
-  geom_violin() +
-  geom_point(position = position_jitter(w = .2, h = 0.2))
 
 ggplot(dat, aes(x=p_key_value_2, fill = Power_f)) +
   geom_histogram(position = "dodge")
-ggplot(dat, aes(x = interaction(Power_f, Gun_type_f), y = p_key_value_2)) +
-  geom_violin() +
-  geom_point(position = position_jitter(w = .15, h = 0))
 
 # How bad is data missingness across DVs?
 DVs = c("amend1", "amend2", 
@@ -121,3 +116,100 @@ summary(cap_bin)
 
 lm(magazine_cap ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, data = dat) %>% 
   summary()
+
+# Plotting ----
+# Manipulation check
+# Deaths
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = p_key_value_1)) +
+  geom_violin() +
+  scale_y_continuous("Player's deaths") +
+  scale_x_discrete("Condition")
+# Kills
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = p_key_value_2)) +
+  geom_violin() +
+  scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+
+# 1st amendment
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = amend1)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+
+# 2nd amendment
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = amend2)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+
+# 2nd > 1st difference
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = amend2-amend1)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+    #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+
+# AR desire
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = AR_desire)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+# AR intent
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = AR_intent)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+# AR price
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = AR_price)) +
+#  geom_violin() +
+  geom_boxplot() +
+  #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+
+ggplot(dat, aes(x = AR_desire, y = AR_price)) +
+  #  geom_violin() +
+  geom_point() +
+  geom_smooth() 
+
+# game gun desire
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = game_gun_desire)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+
+# policy
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = policy)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+
+# magazine cap
+ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = magazine_cap)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  #scale_y_continuous("Monsters killed") +
+  scale_x_discrete("Condition")
+
+#Tidyr for faceted plot?
+dat_tidy = dat %>% 
+  select(-AR_price_blank, -AR_price) %>% 
+  select(Subno:Power, Gun_type_f, Power_f,  
+         p_key_value_1:p_key_value_2, amend1:policy, magazine_cap) %>% 
+  rename(kills = p_key_value_1,
+         deaths = p_key_value_2,
+         free_speech = amend1,
+         private_arms = amend2) %>% 
+  gather(key = "variable", value = "value", kills:magazine_cap)
+
+ggplot(dat_tidy, aes(x = interaction(Gun_type_f, Power_f),
+                     y = value)) +
+  geom_violin() +
+  geom_boxplot(width = .2) +
+  facet_wrap(~variable, scales = "free_y") +
+  scale_x_discrete("Effets of Condition")
