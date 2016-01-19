@@ -22,8 +22,10 @@ dat$Gender_f = factor(dat$Gender, labels = c("Female", "Male"))
 
 # Analysis ----
 # Manipulation check
-glm(p_key_value_1 ~ Gun_type_f*Power_f, data = dat, family = "poisson") %>% summary
-glm(p_key_value_2 ~ Gun_type_f*Power_f, data = dat, family = "poisson") %>% summary
+model.deaths = glm(p_key_value_1 ~ Gun_type_f*Power_f, data = dat, family = "poisson") %>% 
+  summary
+model.kills = glm(p_key_value_2 ~ Gun_type_f*Power_f, data = dat, family = "poisson") %>% 
+  summary
 
 tapply(dat$p_key_value_1, list(dat$Gun_type_f, dat$Power_f), mean, na.rm = T)
 tapply(dat$p_key_value_2, list(dat$Gun_type_f, dat$Power_f), mean, na.rm = T)
@@ -50,17 +52,19 @@ dat1 = dat %>%
   filter(complete.cases(.)) %>% 
   as.data.frame()
 
-mod1 = anovaBF(amend2 ~ Gun_type_f * Power_f, 
-               rscaleFixed = .5, data = dat1)
-mod2 = anovaBF(AR_intent ~ Gun_type_f * Power_f, 
-               rscaleFixed = .5, data = dat1)
-mod3 = anovaBF(game_gun_desire ~ Gun_type_f * Power_f, 
-               rscaleFixed = .5, data = dat1)
-mod4 = anovaBF(policy ~ Gun_type_f * Power_f, 
-               rscaleFixed = .5, data = dat1)
+# mod1 = anovaBF(amend2 ~ Gun_type_f * Power_f, 
+#                rscaleFixed = .5, data = dat1)
+# mod2 = anovaBF(AR_intent ~ Gun_type_f * Power_f, 
+#                rscaleFixed = .5, data = dat1)
+# mod3 = anovaBF(game_gun_desire ~ Gun_type_f * Power_f, 
+#                rscaleFixed = .5, data = dat1)
+# mod4 = anovaBF(policy ~ Gun_type_f * Power_f, 
+#                rscaleFixed = .5, data = dat1)
 
 
 # Adding politics as a covariate
+# These take a LOT of cycles to run. Maybe make a note of the best & most relevant models,
+  # run those in lmBF, then make ratios.
 mod1_cov = anovaBF(amend2 ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
                    rscaleFixed = .5, data = dat1)
 mod2_cov = anovaBF(AR_intent ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
@@ -70,6 +74,10 @@ mod3_cov = anovaBF(game_gun_desire ~ Gun_type_f * Power_f + pol_orien_f + Gender
 mod4_cov = anovaBF(policy ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
                    rscaleFixed = .5, data = dat1)
 sort(mod1_cov)
+
+# extract a Bayes Factor like this:
+mod1_cov["Gender_f"]@bayesFactor$bf %>% exp()
+
 sort(mod2_cov)
 sort(mod3_cov)
 sort(mod4_cov)
@@ -201,8 +209,8 @@ dat_tidy = dat %>%
   select(-AR_price_blank, -AR_price) %>% 
   select(Subno:Power, Gun_type_f, Power_f,  
          p_key_value_1:p_key_value_2, amend1:policy, magazine_cap) %>% 
-  rename(kills = p_key_value_1,
-         deaths = p_key_value_2,
+  rename(deaths = p_key_value_1,
+         kills = p_key_value_2,
          free_speech = amend1,
          private_arms = amend2) %>% 
   gather(key = "variable", value = "value", kills:magazine_cap)
@@ -212,4 +220,20 @@ ggplot(dat_tidy, aes(x = interaction(Gun_type_f, Power_f),
   geom_violin() +
   geom_boxplot(width = .2) +
   facet_wrap(~variable, scales = "free_y") +
-  scale_x_discrete("Effets of Condition")
+  scale_x_discrete("Effects of Condition")
+
+dat_tidy2 = dat %>% 
+  select(Subno:Power, Gun_type_f, Power_f,  
+         per_1:per_4) %>% 
+  rename(accidental_discharge = per_1,
+         stolen = per_2,
+         use_in_defense = per_3,
+         non_owner_accident = per_4) %>% 
+  gather(key = "variable", value = "value", accidental_discharge:non_owner_accident)
+
+ggplot(dat_tidy2, aes(x = interaction(Gun_type_f, Power_f),
+                     y = value)) +
+  geom_violin() +
+  geom_boxplot(width = .2, notch = T) +
+  facet_wrap(~variable, scales = "free_y") +
+  scale_x_discrete("Effects of Condition")
