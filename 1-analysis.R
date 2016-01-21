@@ -219,7 +219,7 @@ dat_tidy = dat %>%
          kills = p_key_value_2,
          free_speech = amend1,
          private_arms = amend2) %>% 
-  gather(key = "variable", value = "value", kills:magazine_cap)
+  gather(key = "variable", value = "value", deaths:magazine_cap)
 
 ggplot(dat_tidy, aes(x = interaction(Gun_type_f, Power_f),
                      y = value)) +
@@ -240,6 +240,6 @@ dat_tidy2 = dat %>%
 ggplot(dat_tidy2, aes(x = interaction(Gun_type_f, Power_f),
                      y = value)) +
   geom_violin() +
-  geom_boxplot(width = .2, notch = T) +
+  geom_boxplot(width = .15) +
   facet_wrap(~variable, scales = "free_y") +
   scale_x_discrete("Effects of Condition")
