@@ -7,8 +7,19 @@ output:
     reference_docx: template_0.docx
 ---
 
+```{r notes, echo = F, include = F} 
+#Note to self: "Democrat" is reference level for pol_orien_f
+```
+
 ```{r setup, echo = F, include = F}
-source("1-analysis.R")
+library(magrittr)
+library(dplyr)
+library(BayesFactor)
+library(ggplot2)
+library(broom)
+
+load("Study_results.Rdata")
+
 # function for printing p-values
 printp = function(x) {
   if (x > 1) return("That ain't a p-value, buddy!")
@@ -26,10 +37,59 @@ m_sd = function(x) {
         ", *SD* = ", round(sd(x, na.rm=T),2)
         )
 }
+
+# Prepare finer points of models:
+coef.cap = model.cap %>% 
+  summary %$% 
+  coefficients %>% 
+  round(3)
+df.cap = model.cap %$% df.residual
+
+coef.cap_bin = model.cap_bin %>% 
+  summary %$% 
+  coefficients %>% 
+  round(3)
+df.cap_bin = model.cap_bin %$% df.residual
+
+coef.deaths = model.deaths %>% 
+  summary %$% 
+  coefficients %>% 
+  round(3)
+df.deaths = model.deaths %$% df.residual
+
+coef.kills = model.kills %>% 
+  summary %$% 
+  coefficients %>% 
+  round(3)
+df.kills = model.kills %$% df.residual
+
+coef.gamma1 = gamma1 %>% 
+  summary %$% 
+  coefficients %>% 
+  round(3)
+df.gamma1 = gamma1 %$% df.residual
+
+coef.gamma2 = gamma2 %>% 
+  summary %$% 
+  coefficients %>% 
+  round(3)
+df.gamma2 = gamma2 %$% df.residual
+
+coef.gamma3 = gamma3 %>% 
+  summary %$% 
+  coefficients %>% 
+  round(3)
+df.gamma3 = gamma3 %$% df.residual
+
+coef.gamma4 = gamma4 %>% 
+  summary %$% 
+  coefficients %>% 
+  round(3)
+df.gamma4 = gamma4 %$% df.residual
 ```
 
 
-**Manipulation check.** We tested how assignment to the 2 × 2 design influenced participants’ in-game performance, as measured by the number of times the player died and the number of monsters the player killed. Count of player deaths was Poisson-distributed. Participants in the powerful-gun condition died significantly fewer times than those in the weak-gun condition `r fetch_stats(coef.deaths["Power_f"], df.deaths)`*(b = -.376, SEb = .129, p = .004)*, while the type of gun (realistic vs. sci-fi) did not significantly influence this outcome `r fetch_stats(coef.deaths["Gun_type_f"], df.deaths)`*(b = .028, SEb = .046, p = .539)*, nor did gun type and gun power significantly interact `r fetch_stats(coef.deaths["Power_f:Gun_type_f"], df.deaths)`*(b = .017, SEb = .046, p = .715)*.  Similarly, participants in the powerful-gun condition killed substantially more enemies than did those in the weak-gun condition, `r fetch_stats(coef.kills["Power_f"], df.kills)`. Unexpected effects of gun type and a gun type × power interaction were detected such that participants in the AR-15 condition killed fewer monsters than their ZQ-5 counterparts (main effect: `r fetch_stats(coef.kills["Gun_type_f"], df.kills)`) particularly when the AR-15 was powerful the powerful-gun condition (interaction effect: `r fetch_stats(coef.kills["Gun_type_f:Power_f"], df.kills)`. 
+**Manipulation check.** We tested how assignment to the 2 × 2 design influenced participants’ in-game performance, as measured by the number of times the player died and the number of monsters the player killed. Count of player deaths was Poisson-distributed. Participants in the powerful-gun condition died significantly fewer times than those in the weak-gun condition `r fetch_stats(coef.deaths["Power_fStrong",], df.deaths)`, while the type of gun (realistic vs. sci-fi) did not significantly influence this outcome `r fetch_stats(coef.deaths["Gun_type_fAR-15",], df.deaths)`, nor did gun type and gun power significantly interact `r fetch_stats(coef.deaths["Gun_type_fAR-15:Power_fStrong",], df.deaths)`*(b = .017, SEb = .046, p = .715)*.  Similarly, participants in the powerful-gun condition killed substantially more enemies than did those in the weak-gun condition, `r fetch_stats(coef.kills["Power_fStrong",], df.kills)`. Unexpected effects of gun type and a gun type × power interaction were detected such that participants in the AR-15 condition killed fewer monsters than their ZQ-5 counterparts (main effect: `r fetch_stats(coef.kills["Gun_type_fAR-15",], df.kills)`) particularly when the AR-15 was powerful the powerful-gun condition (interaction effect: `r fetch_stats(coef.kills["Gun_type_fAR-15:Power_fStrong",], df.kills)`. 
 
 Regrettably, we did not ask participants directly about how fun, powerful, satisfying, etc. the in-game gun was. As such, we do not have direct evidence that the powerful gun was more pleasant to use than the weak gun, although we might infer that from the observed difference in efficacy. 
 
@@ -53,12 +113,37 @@ Policy views were best described by political orientation alone, BF = `r exp(mod
 
 **Rates of gun accidents and gun use.** Participants’ estimated rates seemed to be more appropriately modeled as a gamma distribution than a normal distribution. Because responses of 0% cannot be modeled under this distribution, these responses were adjusted to 0.001%. In general, we note that estimates contained considerable uncertainty and noise, with estimates ranging from 0% to 80% or more.
 
-Only a few idiosyncratic predictors reached statistical significance. Republicans, relative to liberals, thought it more probable that a gun owner would experience a gun-related accident such as an accidental discharge. Men, relative to women, thought it more probable that a gun owner might have a gun stolen from them. Libertarians, relative to other political parties, thought it more probable that a gun owner would ever use their gun in an act of self-defense. None of these estimated rates were significantly predicted by the game participants had played.
+Only a few idiosyncratic predictors reached statistical significance. Republicans, relative to liberals, thought it more probable that a gun owner would experience a gun-related accident such as an accidental discharge, `r fetch_stats(coef.gamma1["pol_orien_fRep",], df.gamma1)`. Men, relative to women, thought it more probable that a gun owner might have a gun stolen from them, `r fetch_stats(coef.gamma2["Gender_fMale",], df.gamma2)`. Libertarians, relative to other political parties, thought it more probable that a gun owner would ever use their gun in an act of self-defense, `r fetch_stats(coef.gamma3["pol_orien_fLib",], df.gamma3)`. None of these estimated rates were significantly predicted by the game participants had played. Full tables of model output are provided in Supplementary Table 1.
 
-**[INSERT TABLE OF MODEL OUTPUT HERE]**
+```{r gamma-tables, echo = F}
+tg1 = tidy(gamma1)
+tg1$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", "Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+tg1
 
-**Magazine capacity.** Several participants listed very large values (e.g., 100 or more) for a maximum magazine size, or wrote in responses to the effect that there should be no such government-imposed limit. We tried modeling this outcome in two ways. First, we winsorized all responses in excess of 30 down to 30 and attempted a linear model. Second, we coded a dichotomous variable for responses less than 30 and responses equal to or greater than 30 and attempted a logistic model. Neither model revealed any significant effects of game.
+tg2 = tidy(gamma2)
+tg2$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", "Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+tg2
 
-**[INSERT TWO TABLES OF MODEL OUTPUT HERE]**
+tg3 = tidy(gamma3)
+tg3$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", "Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+tg3
+
+tg4 = tidy(gamma4)
+tg4$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", "Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+tg4
+```
+
+**Magazine capacity.** Several participants listed very large values (e.g., 100 or more) for a maximum magazine size, or wrote in responses to the effect that there should be no such government-imposed limit. We tried modeling this outcome in two ways. First, we winsorized all responses in excess of 30 down to 30 and attempted a linear model. Second, we coded a dichotomous variable for responses less than 30 and responses equal to or greater than 30 and attempted a logistic model. The linear model suggested that males (`r fetch_stats(coef.cap, df.cap)`) and libertarians (`r fetch_stats(coef.cap, df.cap)`) supported larger magazine sizes than did females and democrats. The logistic model found no significant predictors. Neither model detected any significant effects of game.
+
+```{r magazine-tables, echo=F}
+table.cap1 = tidy(model.cap)
+table.cap1$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", "Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+table.cap1
+
+table.cap2 = tidy(model.cap_bin)
+table.cap2$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", "Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+table.cap2
+```
+
 
 

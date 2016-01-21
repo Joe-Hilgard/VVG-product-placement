@@ -5,6 +5,7 @@ library(tidyr)
 library(psych)
 library(BayesFactor)
 library(ggplot2)
+library(broom)
 
 dat = read.delim("processed_data.txt", stringsAsFactors = F)
 
@@ -22,10 +23,8 @@ dat$Gender_f = factor(dat$Gender, labels = c("Female", "Male"))
 
 # Analysis ----
 # Manipulation check
-model.deaths = glm(p_key_value_1 ~ Gun_type_f*Power_f, data = dat, family = "poisson") %>% 
-  summary
-model.kills = glm(p_key_value_2 ~ Gun_type_f*Power_f, data = dat, family = "poisson") %>% 
-  summary
+model.deaths = glm(p_key_value_1 ~ Gun_type_f*Power_f, data = dat, family = "poisson")
+model.kills = glm(p_key_value_2 ~ Gun_type_f*Power_f, data = dat, family = "poisson")
 
 tapply(dat$p_key_value_1, list(dat$Gun_type_f, dat$Power_f), mean, na.rm = T)
 tapply(dat$p_key_value_2, list(dat$Gun_type_f, dat$Power_f), mean, na.rm = T)
@@ -92,24 +91,28 @@ mod5_cov = dat %>%
 sort(mod5_cov)
 
 # geometrically-distributed outcomes
+## owner experiencing accident
 dat$per_1[dat$per_1 == 0] = .001
 gamma1 = glm(per_1 ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
              data = dat, family = "Gamma")
 summary(gamma1)
 plot(gamma1)
 
+## owner experiencing gun theft
 dat$per_2[dat$per_2 == 0] = .001
 gamma2 = glm(per_2 ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
              data = dat, family = "Gamma")
 summary(gamma2)
 plot(gamma2)
 
+## owner using in self-defense
 dat$per_3[dat$per_3 == 0] = .001
 gamma3 = glm(per_3 ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
              data = dat, family = "Gamma")
 summary(gamma3)
 plot(gamma3)
 
+## non-owner experiencing accident
 dat$per_4[dat$per_4 == 0] = .001
 gamma4 = glm(per_4 ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
              data = dat, family = "Gamma")
@@ -118,12 +121,15 @@ plot(gamma4)
 
 # Magazine capacity
 dat$magazine_cap_bin2 = ifelse(dat$magazine_cap_bin == "greater", 1, 0)
-cap_bin = glm(magazine_cap_bin2 ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
+model.cap_bin = glm(magazine_cap_bin2 ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, 
               data = dat, family = "binomial")
-summary(cap_bin)
+summary(model.cap_bin)
 
-lm(magazine_cap ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, data = dat) %>% 
-  summary()
+model.cap = lm(magazine_cap ~ Gun_type_f * Power_f + pol_orien_f + Gender_f, data = dat)
+summary(model.cap)
+
+# Save workspace so don't have to run the MCMC chains every time I build the Results!----
+save.image(file = "Study_results.Rdata")
 
 # Plotting ----
 # Manipulation check
