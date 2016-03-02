@@ -1,3 +1,4 @@
+library(pscl)
 library(readxl)
 library(magrittr)
 library(dplyr)
@@ -24,7 +25,9 @@ dat$Gender_f = factor(dat$Gender, labels = c("Female", "Male"))
 # Analysis ----
 # Manipulation check
 model.deaths = glm(p_key_value_1 ~ Gun_type_f*Power_f, data = dat, family = "poisson")
+model.deaths2 = zeroinfl(p_key_value_1 ~ Gun_type_f*Power_f, data = dat, dist = "negbin")
 model.kills = glm(p_key_value_2 ~ Gun_type_f*Power_f, data = dat, family = "poisson")
+model.kills2 = glm.nb(p_key_value_2 ~ Gun_type_f*Power_f, data = dat)
 
 tapply(dat$p_key_value_1, list(dat$Gun_type_f, dat$Power_f), mean, na.rm = T)
 tapply(dat$p_key_value_2, list(dat$Gun_type_f, dat$Power_f), mean, na.rm = T)

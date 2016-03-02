@@ -51,15 +51,17 @@ coef.cap_bin = model.cap_bin %>%
   round(3)
 df.cap_bin = model.cap_bin %$% df.residual
 
-coef.deaths = model.deaths %>% 
+coef.deaths = model.deaths2 %>% 
   summary %$% 
-  coefficients %>% 
+  coefficients %$%
+  count %>% 
   round(3)
 df.deaths = model.deaths %$% df.residual
 
 coef.kills = model.kills %>% 
   summary %$% 
-  coefficients %>% 
+  coefficients %$%
+  count %>%  
   round(3)
 df.kills = model.kills %$% df.residual
 
@@ -91,9 +93,9 @@ df.gamma4 = gamma4 %$% df.residual
 
 **Manipulation check.** We tested how assignment to the 2 × 2 design influenced participants' in-game performance, as measured by the number of times the player died and the number of monsters the player killed. 
 
-Count of player deaths was Poisson-distributed. Participants in the powerful-gun condition died significantly fewer times than those in the weak-gun condition `r fetch_stats(coef.deaths["Power_fStrong",], df.deaths)`, while the type of gun (realistic vs. sci-fi) did not significantly influence this outcome `r fetch_stats(coef.deaths["Gun_type_fAR-15",], df.deaths)`, nor did gun type and gun power significantly interact `r fetch_stats(coef.deaths["Gun_type_fAR-15:Power_fStrong",], df.deaths)`.  
+Count of player deaths was highly skewed and perhaps best decribed by a zero-inflated negative binomial distribution. Supporting this modeling decision, the overdispersion parameter was statistically significant, p = `r summary(model.deaths2)$coefficients$count[5, 4] %>% round(3)`. Neither the power (`r fetch_stats(coef.deaths["Power_fStrong",], df.deaths)`) nor the type of gun (realistic vs. sci-fi; `r fetch_stats(coef.deaths["Gun_type_fAR-15",], df.deaths)`) significantly influenced this outcome. The interaction of gun type and gun power did not significantly interact `r fetch_stats(coef.deaths["Gun_type_fAR-15:Power_fStrong",], df.deaths)`.  
 
-Similarly, participants in the powerful-gun condition killed substantially more enemies than did those in the weak-gun condition, `r fetch_stats(coef.kills["Power_fStrong",], df.kills)`. Unexpected effects of gun type and a gun type × power interaction were detected such that participants in the AR-15 condition killed fewer monsters than their ZQ-5 counterparts (main effect: `r fetch_stats(coef.kills["Gun_type_fAR-15",], df.kills)`) particularly when the AR-15 was powerful (interaction effect: `r fetch_stats(coef.kills["Gun_type_fAR-15:Power_fStrong",], df.kills)`. 
+Killed enemies was also highly skewed, and so a negative binomial distribution was fit. Participants in the powerful-gun condition killed substantially more enemies than did those in the weak-gun condition, `r fetch_stats(coef.kills["Power_fStrong",], df.kills)`, supporting the efficacy of the gun-power manipulation. Neither gun type (`r fetch_stats(coef.kills["Gun_type_fAR-15",], df.kills)`) nor the interaction (`r fetch_stats(coef.kills["Gun_type_fAR-15:Power_fStrong",], df.kills)`) were significantly related to the number of enemies killed. 
 
 Regrettably, we did not ask participants directly about how fun, powerful, satisfying, etc. the in-game gun was. As such, we do not have direct evidence that the powerful gun was more pleasant to use than the weak gun, although we might infer that from the observed difference in efficacy. 
 
