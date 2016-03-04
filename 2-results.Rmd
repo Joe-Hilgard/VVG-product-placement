@@ -12,13 +12,13 @@ output:
 ```
 
 ```{r setup, echo = F, include = F}
+load("./Study_results.Rdata")
+library(pscl)
 library(magrittr)
 library(dplyr)
 library(BayesFactor)
 library(ggplot2)
 library(broom)
-
-load("Study_results.Rdata")
 
 # function for printing p-values
 printp = function(x) {
@@ -37,7 +37,8 @@ m_sd = function(x) {
         ", *SD* = ", round(sd(x, na.rm=T),2)
         )
 }
-
+```
+``` {r prepareCoefs, echo = F, include = F}
 # Prepare finer points of models:
 coef.cap = model.cap %>% 
   summary %$% 
@@ -58,12 +59,11 @@ coef.deaths = model.deaths2 %>%
   round(3)
 df.deaths = model.deaths %$% df.residual
 
-coef.kills = model.kills %>% 
+coef.kills = model.kills2 %>% 
   summary %$% 
-  coefficients %$%
-  count %>%  
+  coefficients %>%  
   round(3)
-df.kills = model.kills %$% df.residual
+df.kills = model.kills2 %$% df.residual
 
 coef.gamma1 = gamma1 %>% 
   summary %$% 
@@ -93,27 +93,27 @@ df.gamma4 = gamma4 %$% df.residual
 
 **Manipulation check.** We tested how assignment to the 2 × 2 design influenced participants' in-game performance, as measured by the number of times the player died and the number of monsters the player killed. 
 
-Count of player deaths was highly skewed and perhaps best decribed by a zero-inflated negative binomial distribution. Supporting this modeling decision, the overdispersion parameter was statistically significant, p = `r summary(model.deaths2)$coefficients$count[5, 4] %>% round(3)`. Neither the power (`r fetch_stats(coef.deaths["Power_fStrong",], df.deaths)`) nor the type of gun (realistic vs. sci-fi; `r fetch_stats(coef.deaths["Gun_type_fAR-15",], df.deaths)`) significantly influenced this outcome. The interaction of gun type and gun power did not significantly interact `r fetch_stats(coef.deaths["Gun_type_fAR-15:Power_fStrong",], df.deaths)`.  
+Count of player deaths was highly skewed and perhaps best decribed by a zero-inflated negative binomial distribution. A logit link was used for the zero inflation, and a log link was used for the negative binomial. Supporting this modeling decision, the overdispersion parameter was statistically significant, `r printp(summary(model.deaths2)$coefficients$count[5, 4])`. Neither the Gun Power (strong vs. weak; `r fetch_stats(coef.deaths["Power_fStrong",], df.deaths)`) nor Gun Type (realistic vs. sci-fi; `r fetch_stats(coef.deaths["Gun_type_fAR-15",], df.deaths)`) significantly influenced this outcome. Gun Power and Gun Type did not significantly interact, `r fetch_stats(coef.deaths["Gun_type_fAR-15:Power_fStrong",], df.deaths)`.  
 
-Killed enemies was also highly skewed, and so a negative binomial distribution was fit. Participants in the powerful-gun condition killed substantially more enemies than did those in the weak-gun condition, `r fetch_stats(coef.kills["Power_fStrong",], df.kills)`, supporting the efficacy of the gun-power manipulation. Neither gun type (`r fetch_stats(coef.kills["Gun_type_fAR-15",], df.kills)`) nor the interaction (`r fetch_stats(coef.kills["Gun_type_fAR-15:Power_fStrong",], df.kills)`) were significantly related to the number of enemies killed. 
+Count of killed enemies was also highly skewed, and so a negative binomial distribution was fit using a log link. Participants in the powerful-gun condition killed substantially more enemies than did those in the weak-gun condition, `r fetch_stats(coef.kills["Power_fStrong",], df.kills)`, supporting the efficacy of the gun-power manipulation. Neither Gun Type (`r fetch_stats(coef.kills["Gun_type_fAR-15",], df.kills)`) nor the Gun Type × Gun Power interaction (`r fetch_stats(coef.kills["Gun_type_fAR-15:Power_fStrong",], df.kills)`) were significantly related to the number of enemies killed. 
 
-Regrettably, we did not ask participants directly about how fun, powerful, satisfying, etc. the in-game gun was. As such, we do not have direct evidence that the powerful gun was more pleasant to use than the weak gun, although we might infer that from the observed difference in efficacy. 
+Regrettably, we did not ask participants directly about how fun, powerful, satisfying, etc. the in-game gun was. As such, we do not have direct evidence that the powerful gun was more pleasant to use than the weak gun. At best, we might make infer a difference in pleasure from the observed difference in efficacy. 
 
 Means and SDs of all variables are summarized in Table 2. Combination violin/boxplots for each outcome are summarized in Figures 2 and 3.
 
-**2nd Amendment Advocacy.** Participants' 2nd Amendment advocacy was best modeled by a simple additive model of political orientation and gender, BF = `r exp(mod1_cov["pol_orien_f + Gender_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. The covariates-only model was preferred over the full model (covariates, gun type, gun power, and the gun type × gun power interaction), BF = `r (exp(mod1_cov["pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod1_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` : 1. This indicates that the experimental condition had little explanatory power over and above that of the covariates. Comparison of the full model against the additive model let us examine the evidence for or against the hypothesized Gun Type × Gun Power interaction. The evidence was against this interaction, BF = 1 : `r (exp(mod1_cov["Gun_type_f + Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod1_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.  
+**2nd Amendment Advocacy.** Participants' 2nd Amendment advocacy was best modeled by a simple additive model of political orientation and gender, BF = `r exp(mod1_cov["pol_orien_f + Gender_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. The covariates-only model was preferred over the full model (that is, the model with covariates, Gun Type, Gun Power, and the Gun Type × Gun Power interaction), BF = `r (exp(mod1_cov["pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod1_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` : 1. This indicates that the experimental condition had little explanatory power over and above that of the covariates. Comparison of the full model against the additive model let us examine the evidence for or against the hypothesized Gun Type × Gun Power interaction. The evidence was against this interaction, BF = 1 : `r (exp(mod1_cov["Gun_type_f + Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod1_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.  
 
 **Product attitudes.** Again, attitudes towards the AR-15 were best described by a simple additive model of political orientation and gender, BF = `r exp(mod5_cov["pol_orien_f + Gender_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. The covariates-only model was preferred to the full model, BF = `r (exp(mod5_cov["pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod5_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` : 1. The evidence was against a Gun Type × Gun Power interaction, BF = 1 : `r (exp(mod5_cov["Gun_type_f + Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod5_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.   
 
-**Purchasing intentions.** Purchasing intentions were right-skewed. However, the QQplot of standardized residuals was not unbearably ugly, and transformation by square root or logarithm did not make them prettier. Thus, we present this outcome in its natural units and analyze it with the typical general linear modeling technique. 
+**Purchasing intentions.** Purchasing intentions were right-skewed. However, the QQplot of standardized residuals was not unbearably ugly, and transformation by square root or logarithm did not make the QQplot much prettier. Thus, we analyze this outcome in its natural units with the standard general linear modeling technique. 
 
 Purchasing intentions were best described by additive effects of political orientation and gender, BF = `r exp(mod2_cov["pol_orien_f + Gender_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. The covariates-only model was preferred to the full model, BF = `r (exp(mod2_cov["pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod2_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` : 1. The evidence was against a Gun Type × Gun Power interaction, BF = 1 : `r (exp(mod2_cov["Gun_type_f + Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod2_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.    
 
 **Desire of in-game weapon.** This variable was very badly right-skewed, with most participants choosing the minimum response. Square-root or log transformation did little to fix this. We report this in its natural units, but readers with better ideas for modeling are encouraged to use the raw data to perform further tests.
 
-Weapon desire was best described by an effect of gender, BF = `r exp(mod3_cov["Gender_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. This gender-covariate-only model was preferred to the full model, BF = `r (exp(mod3_cov["Gender_f"]@bayesFactor$bf)/exp(mod3_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` : 1. The addition of the AR-15 × Powerful Gun interaction was not supported, BF = 1 : `r (exp(mod3_cov["Gun_type_f + Power_f + Gender_f"]@bayesFactor$bf)/exp(mod3_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` relative to the additive-effects model.     
+Weapon desire was best described by an effect of gender, BF = `r exp(mod3_cov["Gender_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. Adding the main and interactive effects of Gun Type and Gun Power to this gender-only model was not preferred, BF = 1 : `r (exp(mod3_cov["Gender_f"]@bayesFactor$bf)/exp(mod3_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)`. The evidence was against the predicted Gun Type × Gun Power interaction, BF = 1 : `r (exp(mod3_cov["Gun_type_f + Power_f + Gender_f"]@bayesFactor$bf)/exp(mod3_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.     
 
-**Policy opinion.** Policy views were best described by political orientation alone, BF = `r exp(mod4_cov["pol_orien_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. This covariate-only model was preferred to the full model, BF = `r (exp(mod4_cov["pol_orien_f"]@bayesFactor$bf)/exp(mod5_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f"]@bayesFactor$bf)) %>% signif(3)` : 1. The addition of the AR-15 × Powerful Gun interaction was not supported, BF = 1 : `r (exp(mod4_cov["Gun_type_f + Power_f + pol_orien_f"]@bayesFactor$bf)/exp(mod4_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f"]@bayesFactor$bf)) %>% signif(3)` relative to the additive-effects model.      
+**Policy opinion.** Policy views were best described by political orientation alone, BF = `r exp(mod4_cov["pol_orien_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. Adding the main and interactive effects of Gun Type and Gun Power was not supported, BF = 1 : `r (exp(mod4_cov["pol_orien_f"]@bayesFactor$bf)/exp(mod5_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f"]@bayesFactor$bf)) %>% signif(3)`. The evidence was against the hypothesized Gun Type × Gun Power interaction, BF = 1 : `r (exp(mod4_cov["Gun_type_f + Power_f + pol_orien_f"]@bayesFactor$bf)/exp(mod4_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.      
 
 **Rates of gun accidents and gun use.** Participants' estimated rates seemed to be more appropriately modeled as a gamma distribution than a normal distribution. Because responses of 0% cannot be modeled under this distribution, these responses were adjusted to 0.001%. In general, we note that estimates contained considerable uncertainty and noise, with estimates ranging from 0% to 80% or more.
 

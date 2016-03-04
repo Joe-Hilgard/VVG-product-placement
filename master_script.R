@@ -1,0 +1,15 @@
+library(pscl)
+library(psych)
+library(readxl)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(BayesFactor)
+library(ggplot2)
+library(broom)
+
+
+source("0-scales.R")
+source("1-analysis.R")
+knit("2-results.R")
+source("3-plots.R")
