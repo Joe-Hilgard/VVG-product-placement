@@ -1,4 +1,8 @@
 # Plotting ----
+library(tidyr)
+library(ggplot2)
+dat = read.delim("processed_data.txt", stringsAsFactors = F)
+
 # Manipulation check
 # Deaths
 ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = p_key_value_1)) +

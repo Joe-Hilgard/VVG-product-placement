@@ -9,7 +9,8 @@ library(ggplot2)
 library(broom)
 
 
-source("0-scales.R")
-source("1-analysis.R")
+source("0-cleaning.R")
+source("1-analysis.R") # Computationally expensive!
 knit("2-results.R")
 source("3-plots.R")
+
