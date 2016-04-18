@@ -1,3 +1,7 @@
+# This was an attempt to reduce data dimensionality through PCA or EFA
+# It was ultimately mothballed as uninformative -- we instead analyze individual items
+# It is archived here for posterity.
+
 dat = read.delim("processed_data.txt", stringsAsFactors = F)
 
 # Inspect distributions

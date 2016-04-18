@@ -1,117 +1,83 @@
 # Plotting ----
+library(plyr)
+library(dplyr)
 library(tidyr)
 library(ggplot2)
 dat = read.delim("processed_data.txt", stringsAsFactors = F)
+dat$Condition = mapvalues(dat$Condition, 
+                          from = c(1, 2, 3, 4),
+                          to = c("Weak Sci-Fi", "Weak AR-15", "Strong Sci-Fi", "Strong AR-15"))
 
-# Manipulation check
-# Deaths
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = p_key_value_1)) +
-  geom_violin() +
-  scale_y_continuous("Player's deaths") +
-  scale_x_discrete("Condition")
-# Kills
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = p_key_value_2)) +
-  geom_violin() +
-  scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
+# Fix text for big images
+text_good = theme(axis.text = element_text(size = 8),
+                  axis.title = element_text(size = 12),
+                  strip.text = element_text(size = 12))
 
-# 1st amendment
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = amend1)) +
-  geom_violin() +
-  geom_boxplot(width = .2) +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
-
-# 2nd amendment
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = amend2)) +
-  geom_violin() +
-  geom_boxplot(width = .2) +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
-
-# 2nd > 1st difference
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = amend2-amend1)) +
-  geom_violin() +
-  geom_boxplot(width = .2) +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
-
-# AR desire
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = AR_desire)) +
-  geom_violin() +
-  geom_boxplot(width = .2) +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
-# AR intent
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = AR_intent)) +
-  geom_violin() +
-  geom_boxplot(width = .2) +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
-# AR price
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = AR_price)) +
-  #  geom_violin() +
-  geom_boxplot() +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
-
-ggplot(dat, aes(x = AR_desire, y = AR_price)) +
-  #  geom_violin() +
-  geom_point() +
-  geom_smooth() 
-
-# game gun desire
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = game_gun_desire)) +
-  geom_violin() +
-  geom_boxplot(width = .2) +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
-
-# policy
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = policy)) +
-  geom_violin() +
-  geom_boxplot(width = .2) +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
-
-# magazine cap
-ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = magazine_cap)) +
-  geom_violin() +
-  geom_boxplot(width = .2) +
-  #scale_y_continuous("Monsters killed") +
-  scale_x_discrete("Condition")
 
 #Tidyr for faceted plot?
-# TODO: Consider rename() or mutate() for nicer facet labels
 dat_tidy = dat %>% 
   select(-AR_price_blank, -AR_price) %>% 
   select(Subno:Power, Gun_type_f, Power_f,  
          p_key_value_1:p_key_value_2, amend1:policy, magazine_cap) %>% 
-  rename(deaths = p_key_value_1,
-         kills = p_key_value_2,
-         free_speech = amend1,
-         private_arms = amend2) %>% 
-  gather(key = "variable", value = "value", deaths:magazine_cap)
+  rename(Deaths = p_key_value_1,
+         Kills = p_key_value_2,
+         `1st Amendment` = amend1,
+         `2nd Amendment` = amend2,
+         `AR-15 Evaluation` = AR_desire,
+         `AR-15 Purchasing Intent` = AR_intent,
+         `In-Game Gun Evaluation` = game_gun_desire,
+         `Gun Control Support` = policy,
+         `Magazine Size Limit` = magazine_cap) %>% 
+  gather(key = "variable", value = "value", Deaths:`Magazine Size Limit`)
 
-ggplot(dat_tidy, aes(x = interaction(Gun_type_f, Power_f),
-                     y = value)) +
+# Figure 1: Manipulation checks
+dat_tidy %>% 
+  filter(variable %in% c("Kills", "Deaths")) %>% 
+  ggplot(aes(x = Condition, y = value)) +
+  geom_violin() +
+  geom_boxplot(width = .2, notch = T) +
+  facet_wrap(~variable, scales = "free_y") +
+  scale_y_continuous("Count") +
+  scale_x_discrete("Effects of Condition") +
+  text_good
+ggsave(filename = "Figure1.png", 
+       width = 6.5, height = 3, 
+       units = "in", 
+       dpi = 300)
+
+# Figure 2: All outcomes
+dat_tidy %>% 
+  filter(!(variable %in% c("Deaths", "Kills", "1st Amendment"))) %>% 
+  ggplot(aes(x = Condition, y = value)) +
   geom_violin() +
   geom_boxplot(width = .2) +
-  facet_wrap(~variable, scales = "free_y") +
-  scale_x_discrete("Effects of Condition")
+  facet_wrap(~variable, scales = "free_y", nrow = 3) +
+  scale_x_discrete("Effects of Condition") +
+  scale_y_continuous("Value") +
+  text_good
+ggsave(filename = "Figure2.png", 
+       width = 6.5, height = 8, 
+       units = "in", 
+       dpi = 600)
 
+# Figure 3: Gamma-distributed outcomes
 dat_tidy2 = dat %>% 
   select(Subno:Power, Gun_type_f, Power_f,  
          per_1:per_4) %>% 
-  rename(accidental_discharge = per_1,
-         stolen = per_2,
-         use_in_defense = per_3,
-         non_owner_accident = per_4) %>% 
-  gather(key = "variable", value = "value", accidental_discharge:non_owner_accident)
+  rename(`Accidental Discharge (Owner)` = per_1,
+         `Gun Stolen` = per_2,
+         `Use in Self-Defense` = per_3,
+         `Accidental Discharge (Non-owner)` = per_4) %>% 
+  gather(key = "variable", value = "value", 
+         `Accidental Discharge (Owner)`:`Accidental Discharge (Non-owner)`)
 
-ggplot(dat_tidy2, aes(x = interaction(Gun_type_f, Power_f),
-                      y = value)) +
+ggplot(dat_tidy2, aes(x = Condition, y = value)) +
   geom_violin() +
   geom_boxplot(width = .15) +
   facet_wrap(~variable, scales = "free_y") +
-  scale_x_discrete("Effects of Condition")
+  scale_y_continuous("Percentage") +
+  scale_x_discrete("Effects of Condition") +
+  text_good
+ggsave(filename = "Figure3.png", 
+       width = 6.5, height = 4.5, units = "in", 
+       dpi = 600)

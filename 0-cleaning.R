@@ -58,7 +58,7 @@ table(dat$per_3); hist(dat$per_3, xlim = c(0, 100))
 table(dat$per_4); hist(dat$per_4, xlim = c(0, 100))
 # Looks like an... exponential function? Hazard function, right?
 # [The harmonic mean] is appropriate for situations where the average of rates is desired
-dat$hmean_per = 
+#dat$hmean_per = 
 
 # magazine size ----
 table(dat$magazine_cap)
