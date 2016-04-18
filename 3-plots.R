@@ -82,6 +82,7 @@ ggplot(dat, aes(x = interaction(Gun_type_f, Power_f), y = magazine_cap)) +
   scale_x_discrete("Condition")
 
 #Tidyr for faceted plot?
+# TODO: Consider rename() or mutate() for nicer facet labels
 dat_tidy = dat %>% 
   select(-AR_price_blank, -AR_price) %>% 
   select(Subno:Power, Gun_type_f, Power_f,  

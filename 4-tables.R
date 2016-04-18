@@ -23,6 +23,16 @@ gamma1export = cbind("Outcome" = "Gun-owner accident", tidy(gamma1))
 gamma2export = cbind("Outcome" = "Gun stolen", tidy(gamma2))
 gamma3export = cbind("Outcome" = "Use in self-defense", tidy(gamma3))
 gamma4export = cbind("Outcome" = "Non-owner accident", tidy(gamma4))
+# Consider renaming terms
+#tg1$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", 
+#"Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+# Consider magazine size
+# table.cap1 = tidy(model.cap)
+# table.cap1$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", "Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+# table.cap1
+# table.cap2 = tidy(model.cap_bin)
+# table.cap2$term = c("(Intercept)", "AR-15", "Strong-gun", "Republican", "Moderate", "Libertarian", "Other-pol", "Male", "Strong_AR-15")
+# table.cap2
 
 round4 = function(x) round(x, digits = 4)
 sup.table1 = bind_rows(gamma1export, gamma2export, gamma3export, gamma4export) %>% 
