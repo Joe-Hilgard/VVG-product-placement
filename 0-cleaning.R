@@ -3,8 +3,8 @@
 
 library(readxl)
 library(magrittr)
-library(dplyr)
 library(psych)
+library(dplyr)
 library(ggplot2)
 
 dat = read_excel("data_final.xls", 1)
@@ -46,10 +46,6 @@ dat$game_gun_desire = dat %>%
 # public policy ----
 dat$policy = dat$us_gun_laws + dat$us_rifle + dat$guns_det + 
   (7 - dat$gun_carry) + (7 - dat$school_staff)
-
-dat$policy = dat %>% 
-  select(us_gun_laws:school_staff) %>% 
-  apply(1, sum)
 
 # normative safety ----
 table(dat$per_1); hist(dat$per_1, xlim = c(0, 100))

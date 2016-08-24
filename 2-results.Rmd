@@ -7,13 +7,14 @@ output:
     reference_docx: template_0.docx
 ---
 
-```{r notes, echo = F, include = F} 
-#Note to self: "Democrat" is reference level for pol_orien_f
-```
+
+<!--Note to self: "Democrat" is reference level for pol_orien_f-->
+
 
 ```{r setup, echo = F, include = F}
 load("./Study_results.Rdata")
 library(pscl)
+library(psych)
 library(magrittr)
 library(dplyr)
 library(BayesFactor)
@@ -37,6 +38,43 @@ m_sd = function(x) {
         ", *SD* = ", round(sd(x, na.rm=T),2)
         )
 }
+# function for reporting alpha
+alf = function(x) {
+  x$total$raw_alpha %>% 
+    round(2) %>% 
+    substring(2)
+}
+```
+``` {r cronbachs, echo = F, include = F}
+# 1st amendment
+alpha.1a <- dat %>% 
+  select(speech_protect, game_amend, media_reg, ben_risk, glad_speech) %>% 
+  psych::alpha()
+
+# 2nd amendment
+alpha.2a <- dat %>% 
+  select(gun_protect, gun_amendment, gun_reg, glad_gun) %>% 
+  psych::alpha()
+
+# AR-15 desire
+alpha.desire <- dat %>% 
+  select(AR_1:AR_5) %>% 
+  psych::alpha()
+
+# Buying intent
+alpha.intent <- dat %>% 
+  select(AR_6:AR_8) %>% 
+  psych::alpha()
+
+# game-gun desire
+alpha.gamegun <- dat %>% 
+  select(want:need) %>% 
+  psych::alpha()
+
+# public policy
+alpha.policy <- dat %>% 
+  select(us_gun_laws:school_staff) %>% 
+  psych::alpha() # note reverse-scoring!
 ```
 ``` {r prepareCoefs, echo = F, include = F}
 # Prepare finer points of models:
