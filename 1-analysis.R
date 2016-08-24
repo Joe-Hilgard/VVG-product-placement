@@ -8,7 +8,11 @@ library(BayesFactor)
 library(ggplot2)
 library(broom)
 
-dat = read.delim("processed_data.txt", stringsAsFactors = F)
+dat = read.delim("processed_data.txt")
+# Mutate for reference level and contrast coding
+dat = dat %>% 
+  mutate(Power_f = relevel(Power_f, ref = "Weak"),
+         Gun_type_f = relevel(Gun_type_f, ref = "ZQ-5"))
 
 # Analysis ----
 # Manipulation check

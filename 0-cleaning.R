@@ -70,11 +70,12 @@ dat$magazine_cap_bin = ifelse(dat$magazine_cap == 30, "greater", "other")
 # data cleaning ----
 # Mutate factor forms of Gun_type and Power
 dat$Gun_type_f = factor(dat$Gun_type, labels = c("ZQ-5", "AR-15")) %>% 
-  C(sum) %>% 
-  relevel(ref = "ZQ-5")
+  relevel(ref = "ZQ-5") %>% 
+  C(sum)
+  
 dat$Power_f = factor(dat$Power, labels = c("Weak", "Strong")) %>% 
-  C(sum) %>% 
-  relevel(ref = "Weak")
+  relevel(ref = "Weak") %>% 
+  C(sum)
 # factor form of political orientation, Gender
 dat$pol_orien_f = factor(dat$pol_orien, labels = c("Dem", "Rep", "Mod", "Lib", "Other"))
 dat$Gender_f = factor(dat$Gender, labels = c("Female", "Male"))

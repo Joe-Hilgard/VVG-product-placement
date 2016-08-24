@@ -67,14 +67,16 @@ alpha.intent <- dat %>%
   psych::alpha()
 
 # game-gun desire
-alpha.gamegun <- dat %>% 
-  select(want:need) %>% 
-  psych::alpha()
+cor.gamegun <- with(dat, cor(want, need))
+ggplot(dat, aes(want, need)) +
+  geom_jitter() + geom_smooth() 
+# looks a bit of a dud -- most say no to both, esp need
+
 
 # public policy
 alpha.policy <- dat %>% 
   select(us_gun_laws:school_staff) %>% 
-  psych::alpha() # note reverse-scoring!
+  psych::alpha(check.keys = T) # note reverse-scoring!
 ```
 ``` {r prepareCoefs, echo = F, include = F}
 # Prepare finer points of models:
@@ -136,7 +138,7 @@ df.gamma4 = gamma4 %$% df.residual
 
 **Manipulation check.** We tested how assignment to the 2 × 2 design influenced participants' in-game performance, as measured by the number of times the player died and the number of monsters the player killed. 
 
-Count of player deaths was highly skewed and perhaps best decribed by a zero-inflated negative binomial distribution. A logit link was used for the zero inflation, and a log link was used for the negative binomial. Supporting this modeling decision, the overdispersion parameter was statistically significant, `r printp(summary(model.deaths2)$coefficients$count[5, 4])`. 
+Count of player deaths was highly skewed and perhaps best described by a zero-inflated negative binomial distribution. A logit link was used for the zero inflation, and a log link was used for the negative binomial. Supporting this modeling decision, the overdispersion parameter was statistically significant, `r printp(summary(model.deaths2)$coefficients$count[5, 4])`. 
 With regard to the number of times players died, neither the gun power (strong vs. weak; `r fetch_stats(coef.deaths.count["Power_fStrong",], df.deaths)`) nor gun type (realistic vs. sci-fi; `r fetch_stats(coef.deaths.count["Gun_type_fAR-15",], df.deaths)`) significantly influenced this outcome. Gun power and gun type did not significantly interact, `r fetch_stats(coef.deaths.count["Gun_type_fAR-15:Power_fStrong",], df.deaths)`.  
 With regard to whether players died at all (e.g., the zero-inflation model parameters), neither the gun power (`r fetch_stats(coef.deaths.zero["Power_fStrong",], df.deaths)`) nor gun type (`r fetch_stats(coef.deaths.zero["Gun_type_fAR-15",], df.deaths)`) had a significant effect. They did not significantly interact, either (`r fetch_stats(coef.deaths.zero["Gun_type_fAR-15:Power_fStrong",], df.deaths)`).
 
@@ -158,7 +160,7 @@ Purchasing intentions were best described by additive effects of political orien
 
 Weapon desire was best described by an effect of gender, BF = `r exp(mod3_cov["Gender_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. Adding the main and interactive effects of gun type and gun power to this gender-only model was not preferred, BF = 1 : `r (exp(mod3_cov["Gender_f"]@bayesFactor$bf)/exp(mod3_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)`. The evidence was against the predicted Gun Type × Gun Power interaction, BF = 1 : `r (exp(mod3_cov["Gun_type_f + Power_f + Gender_f"]@bayesFactor$bf)/exp(mod3_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.     
 
-**Policy opinion.** Policy views were best described by political orientation alone, BF = `r exp(mod4_cov["pol_orien_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. Adding the main and interactive effects of gun type and gun power was not supported, BF = 1 : `r (exp(mod4_cov["pol_orien_f"]@bayesFactor$bf)/exp(mod5_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f"]@bayesFactor$bf)) %>% signif(3)`. The evidence was against the hypothesized Gun Type × Gun Power interaction, BF = 1 : `r (exp(mod4_cov["Gun_type_f + Power_f + pol_orien_f"]@bayesFactor$bf)/exp(mod4_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.      
+**Policy opinion.** Policy views were best described by political orientation and gender alone, BF = `r exp(mod4_cov["pol_orien_f + Gender_f"]@bayesFactor$bf) %>% signif(3)` : 1 over the null. Adding the main and interactive effects of gun type and gun power was not supported, BF = 1 : `r (exp(mod4_cov["pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod4_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)`. The evidence was against the hypothesized Gun Type × Gun Power interaction, BF = 1 : `r (exp(mod4_cov["Gun_type_f + Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)/exp(mod4_cov["Gun_type_f + Power_f + Gun_type_f:Power_f + pol_orien_f + Gender_f"]@bayesFactor$bf)) %>% signif(3)` for the full model relative to the additive-effects model.      
 
 **Rates of gun accidents and gun use.** Participants' estimated rates seemed to be more appropriately modeled as a gamma distribution than a normal distribution. Because responses of 0% cannot be modeled under this distribution, these responses were adjusted to 0.001%. In general, we note that participants' estimates were highly variable, ranging from 0% to 80% or more.
 
